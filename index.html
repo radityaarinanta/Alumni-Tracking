@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SIPA - Sistem Intelijen Pelacakan Alumni</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body class="bg-slate-50 font-sans text-slate-900">
+    <nav class="bg-white shadow-sm border-b border-slate-200 px-6 py-4 mb-8">
+      <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-graduation-cap text-blue-600 text-2xl"></i>
+          <span class="font-bold text-xl tracking-tight"
+            >Sistem Tracer Alumni
+            <span class="text-blue-600">Informatika</span></span
+          >
+        </div>
+        <div class="text-sm text-slate-500">
+          <i class="fa-solid fa-user-circle mr-1"></i> Admin:
+          <strong>- UMM</strong>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <p class="text-slate-500 text-sm mb-1">Total Alumni</p>
+          <h3 id="stat-total" class="text-3xl font-bold text-slate-800">0</h3>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <p class="text-slate-500 text-sm mb-1">Teridentifikasi</p>
+          <h3 id="stat-valid" class="text-3xl font-bold text-green-600">0</h3>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <p class="text-slate-500 text-sm mb-1">Status Pending</p>
+          <h3 id="stat-pending" class="text-3xl font-bold text-amber-500">0</h3>
+        </div>
+      </div>
+
+      <div
+        class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden"
+      >
+        <div
+          class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center"
+        >
+          <h2 class="font-semibold text-slate-700">
+            Daftar Kandidat Pelacakan
+          </h2>
+          <div class="flex gap-2">
+            <span
+              class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 flex items-center"
+            >
+              <i class="fa-solid fa-robot mr-1"></i> Hybrid Mode Active
+            </span>
+            <button
+              onclick="location.reload()"
+              class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
+            >
+              <i class="fa-solid fa-sync mr-1"></i> Refresh Data
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead
+              class="bg-slate-100 text-slate-600 uppercase text-xs font-bold"
+            >
+              <tr>
+                <th class="px-6 py-4">Nama Alumni</th>
+                <th class="px-6 py-4">NIM</th>
+                <th class="px-6 py-4">Link Profil Publik</th>
+                <th class="px-6 py-4 text-center">Status</th>
+                <th class="px-6 py-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-alumni" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <footer class="mt-12 py-8 text-center text-slate-400 text-sm">
+      &copy;  Tugas Daily Project Rekayasa Interaksi | Raditya Tantra
+      Arinanta - 224
+    </footer>
+
+    <script>
+      
+      const sheetUrl =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vStLYq8fjzNfFgO_VkCsnjrMsmD0SOs1skNq8v8zmkZfHnJ6mu7BfvxP2jXFrJ9iikOjtudcfyl7eOB/pub?output=csv";
+
+      async function loadData() {
+        try {
+          const response = await fetch(sheetUrl);
+          const data = await response.text();
+          const rows = data.split("\n").slice(1);
+          const tableBody = document.getElementById("tabel-alumni");
+
+          let countTotal = 0;
+          let countValid = 0;
+          let countPending = 0;
+
+          tableBody.innerHTML = "";
+
+          rows.forEach((row) => {
+            const columns = row.split(",");
+            if (columns.length < 4) return;
+
+            const [nama, nim, link, status] = columns.map((c) => c.trim());
+            if (!nama) return;
+
+            countTotal++;
+            const statusLower = status.toLowerCase();
+            if (statusLower === "valid" || statusLower === "verifikasi")
+              countValid++;
+            else countPending++;
+
+            
+            const isPending =
+              statusLower === "pending" || statusLower === "belum dilacak";
+            const badgeClass = isPending
+              ? "bg-amber-100 text-amber-700 border-amber-200"
+              : "bg-green-100 text-green-700 border-green-200";
+
+            
+            const displayLink =
+              link && link !== "" && link !== "None"
+                ? `<a href="${link}" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                                <i class="fa-solid fa-link text-xs"></i> Lihat Profil
+                           </a>`
+                : `<span class="text-slate-400 italic text-sm italic">Belum Ditemukan</span>`;
+
+            tableBody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-6 py-4 font-medium text-slate-800">${nama}</td>
+                            <td class="px-6 py-4 text-slate-500 text-sm">${nim}</td>
+                            <td class="px-6 py-4">${displayLink}</td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-bold border ${badgeClass}">
+                                    ${status.toUpperCase()}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right flex gap-2 justify-end">
+                                <button onclick="window.open('https://www.google.com/search?q=${nama} UMM Informatika', '_blank')" 
+                                    title="Cari Manual di Google"
+                                    class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-lg transition border border-slate-200">
+                                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                                </button>
+                                
+                                <button onclick="alert('Identitas ${nama} Berhasil Diverifikasi!')" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition shadow-sm font-bold flex items-center gap-1">
+                                    <i class="fa-solid fa-check text-[10px]"></i> Validasi
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+          });
+
+          document.getElementById("stat-total").innerText = countTotal;
+          document.getElementById("stat-valid").innerText = countValid;
+          document.getElementById("stat-pending").innerText = countPending;
+        } catch (error) {
+          console.error("Gagal mengambil data:", error);
+          document.getElementById("tabel-alumni").innerHTML =
+            '<tr><td colspan="5" class="p-10 text-center text-red-500">Gagal memuat data dari database.</td></tr>';
+        }
+      }
+
+      loadData();
+    </script>
+  </body>
+</html>
