@@ -24,7 +24,7 @@ Sistem ini menggunakan arsitektur tiga lapis:
 | **T03** | **Fallback System** | Klik tombol "Cari Manual" di Web | Sistem membuka tab baru dengan query [Nama + UMM] yang tepat | **PASS** |
 | **T04** | **Interaction Design** | Klik tombol "Validasi" | Muncul feedback instan kepada Admin setelah verifikasi | **PASS** |
 
-## 4. Kendala Teknis & Mitigasi (Penting)
+## 4. Kendala Teknis & Mitigasi 
 Dalam pengembangannya, sistem menghadapi tantangan berupa **IP Blocking/Rate Limiting** dari mesin pencari publik saat menjalankan bot otomatis secara beruntun.
 
 **Solusi Rekayasa Interaksi yang diterapkan:**
