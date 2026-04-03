@@ -96,6 +96,64 @@
       const sheetUrl =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vStLYq8fjzNfFgO_VkCsnjrMsmD0SOs1skNq8v8zmkZfHnJ6mu7BfvxP2jXFrJ9iikOjtudcfyl7eOB/pub?output=csv";
 
+      function verifikasiData(btn, nama, link, nim) {
+        let currentLink = (link && link !== "" && link !== "None") ? link : "";
+        
+        
+        const savedData = JSON.parse(localStorage.getItem("sipa_validations") || "{}");
+        if (savedData[nim] && savedData[nim].link) {
+            currentLink = savedData[nim].link;
+        }
+
+        
+        const inputLink = prompt(
+            `Verifikasi Identitas: ${nama}\n\nMasukkan atau Validasi Link Profil Publik yang telah ditemukan:`,
+            currentLink
+        );
+
+        
+        if (inputLink === null) return;
+
+        const tr = btn.closest("tr");
+        const badgeSpan = tr ? tr.querySelector("td:nth-child(4) span") : null;
+        const linkTd = tr ? tr.querySelector("td:nth-child(3)") : null;
+
+        
+        if (linkTd) {
+            if (inputLink.trim() !== "") {
+                linkTd.innerHTML = `<a href="${inputLink.trim()}" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                                <i class="fa-solid fa-link text-xs"></i> Lihat Profil
+                           </a>`;
+            } else {
+                linkTd.innerHTML = `<span class="text-slate-400 italic text-sm">Belum Ditemukan</span>`;
+            }
+        }
+        
+        if (badgeSpan && !["VALID", "VERIFIKASI"].includes(badgeSpan.innerText.trim().toUpperCase())) {
+            const statValid = document.getElementById("stat-valid");
+            const statPending = document.getElementById("stat-pending");
+            
+            statValid.innerText = parseInt(statValid.innerText) + 1;
+            const pendingValue = parseInt(statPending.innerText);
+            if (pendingValue > 0) {
+                statPending.innerText = pendingValue - 1;
+            }
+
+            badgeSpan.innerText = "VALID";
+            badgeSpan.className = "px-3 py-1 rounded-full text-[10px] font-bold border bg-green-100 text-green-700 border-green-200";
+        }
+
+      
+        const savedValidations = JSON.parse(localStorage.getItem("sipa_validations") || "{}");
+        savedValidations[nim] = { link: inputLink.trim(), status: "VALID" };
+        localStorage.setItem("sipa_validations", JSON.stringify(savedValidations));
+
+        btn.disabled = true;
+        btn.classList.remove("bg-blue-600", "hover:bg-blue-700");
+        btn.classList.add("bg-slate-400", "cursor-not-allowed", "opacity-75");
+        btn.innerHTML = '<i class="fa-solid fa-check-double text-[10px]"></i> Divalidasi';
+      }
+
       async function loadData() {
         try {
           const response = await fetch(sheetUrl);
@@ -113,8 +171,15 @@
             const columns = row.split(",");
             if (columns.length < 4) return;
 
-            const [nama, nim, link, status] = columns.map((c) => c.trim());
+            let [nama, nim, link, status] = columns.map((c) => c.trim());
             if (!nama) return;
+
+            
+            const savedValidations = JSON.parse(localStorage.getItem("sipa_validations") || "{}");
+            if (savedValidations[nim]) {
+                link = savedValidations[nim].link || link;
+                status = savedValidations[nim].status;
+            }
 
             countTotal++;
             const statusLower = status.toLowerCase();
@@ -154,7 +219,7 @@
                                     <i class="fa-solid fa-magnifying-glass text-xs"></i>
                                 </button>
                                 
-                                <button onclick="alert('Identitas ${nama} Berhasil Diverifikasi!')" 
+                                <button onclick="verifikasiData(this, '${nama}', '${link}', '${nim}')" 
                                     class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition shadow-sm font-bold flex items-center gap-1">
                                     <i class="fa-solid fa-check text-[10px]"></i> Validasi
                                 </button>
